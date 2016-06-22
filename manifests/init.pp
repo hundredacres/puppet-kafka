@@ -35,14 +35,12 @@
 #
 #
 class kafka (
-  $version        = $kafka::params::version,
-  $scala_version  = $kafka::params::scala_version,
-  $install_dir    = $kafka::params::install_dir,
-  $mirror_url     = $kafka::params::mirror_url,
-  $install_java   = $kafka::params::install_java,
-  $package_dir    = $kafka::params::package_dir,
-  $package_name   = $kafka::params::package_name,
-  $package_ensure = $kafka::params::package_ensure,
+  $version       = $kafka::params::version,
+  $scala_version = $kafka::params::scala_version,
+  $install_dir   = $kafka::params::install_dir,
+  $mirror_url    = $kafka::params::mirror_url,
+  $install_java  = $kafka::params::install_java,
+  $package_dir   = $kafka::params::package_dir
 ) inherits kafka::params {
 
   validate_re($::osfamily, 'RedHat|Debian\b', "${::operatingsystem} not supported")
@@ -120,29 +118,25 @@ class kafka (
     ],
   }
 
-  if $package_name == undef {
-    include '::archive'
+  #include '::archive'
 
-    archive { "${package_dir}/${basefilename}":
-      ensure          => present,
-      extract         => true,
-      extract_command => 'tar xfz %s --strip-components=1',
-      extract_path    => $install_directory,
-      source          => $package_url,
-      creates         => "${install_directory}/config",
-      cleanup         => true,
-      user            => 'kafka',
-      group           => 'kafka',
-      require         => [
-        File[$package_dir],
-        File[$install_directory],
-        Group['kafka'],
-        User['kafka'],
-      ],
-    }
-  } else {
-    package { $package_name:
-      ensure => $package_ensure,
-    }
+  archive { "${package_dir}/${basefilename}":
+    ensure          => present,
+    #extract         => true,
+    #extract_command => 'tar xfz %s --strip-components=1',
+    #extract_path    => $install_directory,
+    target          => $install_directory,
+    #source          => $package_url,
+    url             => $package_url,
+    #creates         => "${install_directory}/config",
+    #cleanup         => true,
+    user            => 'kafka',
+    #group           => 'kafka',
+    require         => [
+      File[$package_dir],
+      File[$install_directory],
+      Group['kafka'],
+      User['kafka'],
+    ],
   }
 }
