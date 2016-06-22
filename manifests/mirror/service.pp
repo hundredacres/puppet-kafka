@@ -9,22 +9,40 @@
 #
 class kafka::mirror::service(
   $consumer_configs = $kafka::params::consumer_configs,
-  $consumer_config = $kafka::mirror::consumer_config,
-  $num_streams = $kafka::params::num_streams,
-  $producer_config = $kafka::params::producer_config,
-  $num_producers = $kafka::params::num_producers,
-  $whitelist = $kafka::params::whitelist,
-  $blacklist = $kafka::params::blacklist
-) {
+  $consumer_config  = $kafka::params::consumer_config,
+  $producer_config  = $kafka::params::producer_config,
+  $num_streams      = $kafka::mirror::num_streams,
+  $num_producers    = $kafka::mirror::num_producers,
+  $whitelist        = $kafka::mirror::whitelist,
+  $blacklist        = $kafka::mirror::blacklist,
+  $max_heap         = $kafka::mirror::max_heap
+) inherits ::kafka::params {
 
   if $caller_module_name != $module_name {
     fail("Use of private class ${name} by ${caller_module_name}")
   }
 
-  file { '/etc/init.d/kafka-mirror':
-    ensure  => present,
-    mode    => '0755',
-    content => template('kafka/mirror.init.erb')
+  if $::service_provider == 'systemd' {
+    include ::systemd
+
+    file { '/usr/lib/systemd/system/kafka-mirror.service':
+      ensure  => present,
+      mode    => '0644',
+      content => template('kafka/mirror.unit.erb'),
+    }
+
+    file { '/etc/init.d/kafka-mirror':
+      ensure => absent,
+    }
+
+    File['/usr/lib/systemd/system/kafka-mirror.service'] ~> Exec['systemctl-daemon-reload'] -> Service['kafka-mirror']
+  } else {
+    file { '/etc/init.d/kafka-mirror':
+      ensure  => present,
+      mode    => '0755',
+      content => template('kafka/mirror.init.erb'),
+      before  => Service['kafka-mirror'],
+    }
   }
 
   service { 'kafka-mirror':
@@ -32,6 +50,5 @@ class kafka::mirror::service(
     enable     => true,
     hasstatus  => true,
     hasrestart => true,
-    require    => File['/etc/init.d/kafka-mirror']
   }
 }

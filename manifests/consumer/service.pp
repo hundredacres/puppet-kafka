@@ -8,19 +8,44 @@
 # It manages the kafka-consumer service
 #
 class kafka::consumer::service(
-  $config = $kafka::params::consumer_service_config
+  $service_config   = $kafka::consumer::service_config,
+  $service_defaults = $kafka::consumer::service_defaults
 ) {
 
   if $caller_module_name != $module_name {
     fail("Use of private class ${name} by ${caller_module_name}")
   }
 
-  $consumer_service_config = deep_merge($config, $kafka::params::consumer_service_config)
+  $consumer_service_config = deep_merge($service_defaults, $service_config)
 
-  file { '/etc/init.d/kafka-consumer':
-    ensure  => present,
-    mode    => '0755',
-    content => template('kafka/consumer.init.erb')
+  if $consumer_service_config['topic'] == '' {
+    fail('[Consumer] You need to specify a value for topic')
+  }
+  if $consumer_service_config['zookeeper'] == '' {
+    fail('[Consumer] You need to specify a value for zookeeper')
+  }
+
+  if $::service_provider == 'systemd' {
+    include ::systemd
+
+    file { '/usr/lib/systemd/system/kafka-consumer.service':
+      ensure  => present,
+      mode    => '0644',
+      content => template('kafka/consumer.unit.erb'),
+    }
+
+    file { '/etc/init.d/kafka-consumer':
+      ensure => absent,
+    }
+
+    File['/usr/lib/systemd/system/kafka-consumer.service'] ~> Exec['systemctl-daemon-reload'] -> Service['kafka-consumer']
+  } else {
+    file { '/etc/init.d/kafka-consumer':
+      ensure  => present,
+      mode    => '0755',
+      content => template('kafka/consumer.init.erb'),
+      before  => Service['kafka-consumer'],
+    }
   }
 
   service { 'kafka-consumer':
@@ -28,6 +53,5 @@ class kafka::consumer::service(
     enable     => true,
     hasstatus  => true,
     hasrestart => true,
-    require    => File['/etc/init.d/kafka-consumer']
   }
 }

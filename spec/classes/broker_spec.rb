@@ -1,84 +1,116 @@
 require 'spec_helper'
 
-describe 'kafka::broker' do
-  context 'supported operating systems' do
-    describe "kafka class without any parameters on Debian" do
-      let(:params) {{ }}
-      let(:facts) {{
-        :osfamily => 'Debian',
-        :operatingsystem => 'ubuntu',
-        :operatingsystemrelease => '14.04',
-        :lsbdistcodename => 'lucid',
-        :architecture => 'amd64'
-      }}
+describe 'kafka::broker', type: :class do
+  let :facts do
+    {
+      osfamily: 'Debian',
+      operatingsystem: 'Ubuntu',
+      operatingsystemrelease: '14.04',
+      lsbdistcodename: 'trusty',
+      architecture: 'amd64',
+      service_provider: 'upstart',
+    }
+  end
+  let :params do
+    {
+      config: {
+        'zookeeper.connect' => 'localhost:2181',
+      },
+    }
+  end
 
-      #it { should compile.with_all_deps }
+  it { is_expected.to contain_class('kafka::broker::install').that_comes_before('Class[kafka::broker::config]') }
+  it { is_expected.to contain_class('kafka::broker::config').that_comes_before('Class[kafka::broker::service]') }
+  it { is_expected.to contain_class('kafka::broker::service').that_comes_before('Class[kafka::broker]') }
+  it { is_expected.to contain_class('kafka::broker') }
 
-      it { should contain_class('kafka::broker::install').that_comes_before('kafka::broker::config') }
-      it { should contain_class('kafka::broker::config').that_comes_before('kafka::broker::service') }
-
-      it { should contain_class('java') }
-
-      it { should contain_user('kafka') }
-      it { should contain_group('kafka') }
-
-      it { should contain_exec('download-kafka-package') }
-      it { should contain_exec('untar-kafka-package') }
-
-      it { should contain_file('/opt/kafka').with('ensure' => 'link') }
-
-      it { should contain_file('/etc/init.d/kafka') }
-
-      it { should contain_file('/opt/kafka/config/server.properties').that_notifies('Service[kafka]') }
-
-
-      it { should contain_file('/var/log/kafka').with('ensure' => 'directory') }
-
-      it { should contain_service('kafka') }
+  context 'on Debian' do
+    describe 'kafka::broker::install' do
+      context 'defaults' do
+        it { is_expected.to contain_class('kafka') }
+      end
     end
 
-    describe "kafka class without any parameters on RedHat" do
-      let(:params) {{ }}
-      let(:facts) {{
-        :osfamily => 'RedHat',
-        :operatingsystem => 'centos',
-        :operatingsystemrelease => '6',
-        :architecture => 'amd64'
-      }}
+    describe 'kafka::broker::config' do
+      context 'defaults' do
+        it { is_expected.to contain_file('/opt/kafka/config/server.properties') }
+      end
+    end
 
-      #it { should compile.with_all_deps }
+    describe 'kafka::broker::service' do
+      context 'service_install false' do
+        let :params do
+          {
+            config: {
+              'zookeeper.connect' => 'localhost:2181',
+            },
+            service_install: false,
+          }
+        end
+        it { is_expected.not_to contain_file('/etc/init.d/kafka') }
 
-      it { should contain_class('kafka::broker::install').that_comes_before('kafka::broker::config') }
-      it { should contain_class('kafka::broker::config').that_comes_before('kafka::broker::service') }
+        it { is_expected.not_to contain_service('kafka') }
+      end
+      context 'defaults' do
+        it { is_expected.to contain_file('/etc/init.d/kafka') }
 
-      it { should contain_class('java') }
-
-      it { should contain_user('kafka') }
-      it { should contain_group('kafka') }
-
-      it { should contain_exec('download-kafka-package') }
-      it { should contain_exec('untar-kafka-package') }
-
-      it { should contain_file('/opt/kafka').with('ensure' => 'link') }
-
-      it { should contain_file('/etc/init.d/kafka') }
-
-      it { should contain_file('/opt/kafka/config/server.properties') }
-      it { should contain_file('/var/log/kafka').with('ensure' => 'directory') }
-
-      it { should contain_service('kafka') }
+        it { is_expected.to contain_service('kafka') }
+      end
     end
   end
 
-  context 'unsupported operating system' do
-    describe 'kafka class without any parameters on Solaris/Nexenta' do
-      let(:facts) {{
-        :osfamily        => 'Solaris',
-        :operatingsystem => 'Nexenta',
-        :architecture    => 'amd64'
-      }}
+  context 'on Centos' do
+    let :facts do
+      {
+        osfamily: 'RedHat',
+        operatingsystem: 'CentOS',
+        operatingsystemrelease: '7',
+        operatingsystemmajrelease: '7',
+        architecture: 'amd64',
+        path: '/usr/local/sbin',
+        service_provider: 'systemd',
+      }
+    end
 
-      it { expect { should contain_package('kafka') }.to raise_error(Puppet::Error, /Nexenta not supported/) }
+    describe 'kafka::broker::install' do
+      context 'defaults' do
+        it { is_expected.to contain_class('kafka') }
+      end
+    end
+
+    describe 'kafka::broker::config' do
+      context 'defaults' do
+        it { is_expected.to contain_file('/opt/kafka/config/server.properties') }
+      end
+    end
+
+    describe 'kafka::broker::service' do
+      context 'service_install false' do
+        let :params do
+          {
+            config: {
+              'zookeeper.connect' => 'localhost:2181',
+            },
+            service_install: false,
+          }
+        end
+        it { is_expected.not_to contain_file('/usr/lib/systemd/system/kafka.service') }
+
+        it { is_expected.not_to contain_service('kafka') }
+      end
+      context 'defaults' do
+        it { is_expected.to contain_file('/usr/lib/systemd/system/kafka.service').that_notifies('Exec[systemctl-daemon-reload]') }
+
+        it {
+          is_expected.to contain_file('/etc/init.d/kafka').with(
+            ensure: 'absent',
+          )
+        }
+
+        it { is_expected.to contain_exec('systemctl-daemon-reload').that_comes_before('Service[kafka]') }
+
+        it { is_expected.to contain_service('kafka') }
+      end
     end
   end
 end

@@ -15,31 +15,58 @@
 
 The kafka module for managing the installation and configuration of [Apache Kafka](http://kafka.apache.org)
 
-[![Build
-Status](https://secure.travis-ci.org/puppet-community/puppet-kafka.png)](https://secure.travis-ci.org/puppet-community/puppet-kafka.png)
+[![Puppet Forge](http://img.shields.io/puppetforge/v/puppet/kafka.svg)](https://forge.puppetlabs.com/puppet/kafka) [![Build Status](https://travis-ci.org/voxpupuli/puppet-kafka.png?branch=master)](https://travis-ci.org/voxpupuli/puppet-kafka)
 
 ##Module Description
 
-The kafka module for managing the installation and configuration of Apache Kafka: it's brokers, producers and consumers.
+The Kafka module for managing the installation and configuration of Apache Kafka: it's brokers, producers and consumers.
 
 ##Setup
 
 ###What kafka affects
-Installs the kafka package and creates a new service.
 
-###Beginning with kafka
+Installs the Kafka package and creates a new service.
 
-To install the kafka binaries:
+###Beginning with Kafka
+
+To successfully install Kafka using this module you need to have Apache Zookeeper already running at localhost:2181. You can specify another Zookeeper host:port configuration using the config hash of the kafka:broker class.
+
+The default configuration installs Kafka 0.8.2.1 binaries with Scala 2.10
+
 ```puppet
   class { 'kafka': }
 ```
 
-To install a new kafka broker:
+If you want a Kafka broker server that connects to zookeeper listenting on port 2181:
 
 ```puppet
-   class { 'kafka::broker': }
+	class { 'kafka::broker':
+	  config => { 'broker.id' => '0', 'zookeeper.connect' => 'localhost:2181' }
+	} 
 ```
+
 ##Usage
+
+You can specify different Kafka binaries packages versions to install. Please take a look at the different Scala and Kafka versions combinations at the [Apache Kafka Website](http://kafka.apache.org/downloads.html)
+
+### Installing Kafka version 0.8.2.2 with scala 2.10
+
+We first install the binary package with:
+
+```puppet
+	class { 'kafka':
+		version => '0.8.2.2',
+		scala_version => '2.10'
+	}
+```
+
+Then we set a minimal Kafka broker configuration with:
+
+```puppet
+	class { 'kafka::broker':
+	  config => { 'broker.id' => '0', 'zookeeper.connect' => 'localhost:2181' }
+	} 
+```
 
 ###Classes and Defined Types
 
@@ -55,10 +82,10 @@ The scala version what kafka was built with.
 The directory to install kafka to.
 #####`mirror_url`
 The url where the kafka is downloaded from.
-#####`config`
-A hash of the configuration options.
 #####`install_java`
 Install java if it's not already installed.
+#####`package_dir`
+The directory to install kafka.
 
 ####Class: `kafka::broker`
 One of the primary classes of the kafka module. This class will install a kafka broker.
@@ -73,9 +100,17 @@ The directory to install kafka to.
 #####`mirror_url`
 The url where the kafka is downloaded from.
 #####`config`
-A hash of the configuration options.
+A hash of the configuration options. All values are used in the `server.properties` file directly.
 #####`install_java`
 Install java if it's not already installed.
+#####`service_ensure`
+Sets the ensure state of the broker service to stopped or running.
+#####`service_install`
+Install the init.d service.
+#####`service_restart`
+Whether the configuration files should trigger a service restart
+#####`package_dir`
+The directory to install kafka.
 
 ##Reference
 
