@@ -118,24 +118,18 @@ class kafka (
     ],
   }
 
-  #include '::archive'
+  include '::archive'
 
   archive { "${package_dir}/${basefilename}":
-    name            => $package_name,
     ensure          => present,
-    extension       => 'tgz',
-    #extract         => true,
-    #extract_command => 'tar xfz %s --strip-components=1',
-    #extract_path    => $install_directory,
-    target          => $install_directory,
-    #source          => $package_url,
-    src_target      => '/var/tmp',
-    url             => $package_url,
-    #creates         => "${install_directory}/config",
-    #cleanup         => true,
+    extract         => true,
+    extract_command => 'tar xfz %s --strip-components=1',
+    extract_path    => $install_directory,
+    source          => $package_url,
+    creates         => "${install_directory}/config",
+    cleanup         => true,
     user            => 'kafka',
-    #group           => 'kafka',
-    digest_type     => 'sha2',
+    group           => 'kafka',
     require         => [
       File[$package_dir],
       File[$install_directory],
