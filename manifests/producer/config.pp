@@ -8,26 +8,29 @@
 # It manages the producer config files
 #
 class kafka::producer::config(
-  $config          = $kafka::producer::config,
-  $config_defaults = $kafka::producer::config_defaults,
-  $service_name    = 'kafka-producer',
-  $service_restart = $kafka::producer::service_restart
+  Stdlib::Absolutepath $config_dir = $kafka::producer::config_dir,
+  String $service_name             = $kafka::producer::service_name,
+  Boolean $service_install         = $kafka::producer::service_install,
+  Boolean $service_restart         = $kafka::producer::service_restart,
+  Hash $config                     = $kafka::producer::config,
+  Stdlib::Filemode $config_mode    = $kafka::producer::config_mode,
+  String $group                    = $kafka::producer::group,
 ) {
 
-  $producer_config = deep_merge($config_defaults, $config)
-
-  $config_notify = $service_restart ? {
-    true    => Service[$service_name],
-    default => undef
+  if ($service_install and $service_restart) {
+    $config_notify = Service[$service_name]
+  } else {
+    $config_notify = undef
   }
 
-  file { '/opt/kafka/config/producer.properties':
+  $doctag = 'producerconfigs'
+  file { "${config_dir}/producer.properties":
     ensure  => present,
-    owner   => 'kafka',
-    group   => 'kafka',
-    mode    => '0644',
-    content => template('kafka/producer.properties.erb'),
+    owner   => 'root',
+    group   => $group,
+    mode    => $config_mode,
+    content => template('kafka/properties.erb'),
     notify  => $config_notify,
-    require => File['/opt/kafka/config'],
+    require => File[$config_dir],
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "puppet-kafka",
-  "version": "2.0.1-rc0",
-  "author": "puppet",
+  "version": "5.3.1-rc0",
+  "author": "Vox Pupuli",
   "summary": "Puppet module for Kafka",
   "license": "MIT",
   "source": "https://github.com/voxpupuli/puppet-kafka",
@@ -10,44 +10,35 @@
   "dependencies": [
     {
       "name": "puppet/archive",
-      "version_requirement": ">= 0.5.0"
+      "version_requirement": ">= 1.0.0 < 3.0.0"
     },
     {
       "name": "puppetlabs/java",
-      "version_requirement": ">= 1.4.2"
+      "version_requirement": ">= 1.4.2 < 3.0.0"
     },
     {
       "name": "puppetlabs/stdlib",
-      "version_requirement": ">= 4.11.0"
+      "version_requirement": ">= 4.22.0 < 5.0.0"
     },
     {
       "name": "deric/zookeeper",
-      "version_requirement": ">= 0.5.1"
+      "version_requirement": ">= 0.5.1 < 1.0.0"
     },
     {
       "name": "camptocamp/systemd",
-      "version_requirement": ">= 0.2.2 < 0.3.0"
+      "version_requirement": ">= 0.4.0 < 3.0.0"
     }
   ],
   "operatingsystem_support": [
     {
       "operatingsystem": "CentOS",
       "operatingsystemrelease": [
-        "5",
         "6",
         "7"
       ]
     },
     {
       "operatingsystem": "RedHat",
-      "operatingsystemrelease": [
-        "5",
-        "6",
-        "7"
-      ]
-    },
-    {
-      "operatingsystem": "Debian",
       "operatingsystemrelease": [
         "6",
         "7"
@@ -56,19 +47,21 @@
     {
       "operatingsystem": "Ubuntu",
       "operatingsystemrelease": [
-        "12.04",
-        "14.04"
+        "16.04"
+      ]
+    },
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "8",
+        "9"
       ]
     }
   ],
   "requirements": [
     {
-      "name": "pe",
-      "version_requirement": ">= 3.2.0"
-    },
-    {
       "name": "puppet",
-      "version_requirement": ">= 3.2.0"
+      "version_requirement": ">= 4.10.0 < 6.0.0"
     }
   ],
   "tags": [

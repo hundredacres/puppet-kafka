@@ -25,29 +25,77 @@
 # [*mirror_url*]
 # The url where the kafka is downloaded from.
 #
+# [*install_java*]
+# Install java if it's not already installed.
+#
+# [*package_dir*]
+# The directory to install kafka.
+#
+# [*package_name*]
+# Package name, when installing kafka from a package.
+#
+# [*package_ensure*]
+# Package version (or 'present', 'absent', 'latest'), when installing kafka from a package.
+#
+# [*user*]
+# User to run kafka as.
+#
+# [*group*]
+# Group to run kafka as.
+#
+# [*user_id*]
+# Create the kafka user with this ID.
+#
+# [*group_id*]
+# Create the kafka group with this ID.
+#
+# [*manage_user*]
+# Create the kafka user if it's not already present.
+#
+# [*manage_group*]
+# Create the kafka group if it's not already present.
+#
+# [*config_dir*]
+# The directory to create the kafka config files to.
+#
+# [*log_dir*]
+# The directory for kafka log files.
+#
+# [*bin_dir*]
+# The directory where the kafka scripts are.
+#
+# [*service_name*]
+# Set the name of the service.
+#
+# [*service_install*]
+# Install the init.d or systemd service.
+#
+# [*service_ensure*]
+# Set the ensure state of the service to 'stopped' or 'running'.
+#
+# [*service_restart*]
+# Whether the configuration files should trigger a service restart.
+#
+# [*service_requires*]
+# Set the list of services required to be running before Kafka.
+#
+# [*limit_nofile*]
+# Set the 'LimitNOFILE' option of the systemd service.
+#
+# [*limit_core*]
+# Set the 'LimitCORE' option of the systemd service.
+#
+# [*env*]
+# A hash of the environment variables to set.
+#
 # [*consumer_config*]
 # A hash of the consumer configuration options.
 #
 # [*producer_config*]
 # A hash of the producer configuration options.
 #
-# [*num_streams*]
-# Number of stream (consumer) threads to start.
-#
-# [*num_producers*]
-# Number of producer threads to start.
-#
-# [*install_java*]
-# Install java if it's not already installed.
-#
-# [*max_heap*]
-# Max heap size passed to java with -Xmx (<size>[g|G|m|M|k|K])
-#
-# [*package_dir*]
-# The directory to install kafka.
-#
-# [*service_restart*]
-# Boolean, if the configuration files should trigger a service restart
+# [*service_config*]
+# A hash of the mirror script options.
 #
 # === Examples
 #
@@ -58,37 +106,42 @@
 # }
 #
 class kafka::mirror (
-  $version                  = $kafka::params::version,
-  $scala_version            = $kafka::params::scala_version,
-  $install_dir              = $kafka::params::install_dir,
-  $mirror_url               = $kafka::params::mirror_url,
-  $consumer_config          = {},
-  $consumer_config_defaults = $kafka::params::consumer_config_defaults,
-  $producer_config          = {},
-  $producer_config_defaults = $kafka::params::producer_config_defaults,
-  $num_streams              = $kafka::params::num_streams,
-  $num_producers            = $kafka::params::num_producers,
-  $install_java             = $kafka::params::install_java,
-  $whitelist                = $kafka::params::whitelist,
-  $blacklist                = $kafka::params::blacklist,
-  $max_heap                 = $kafka::params::mirror_max_heap,
-  $package_dir              = $kafka::params::package_dir,
-  $service_restart          = $kafka::params::service_restart,
-  $mirror_jmx_opts          = $kafka::params::mirror_jmx_opts,
-  $mirror_log4j_opts        = $kafka::params::mirror_log4j_opts
+  String $version                            = $kafka::params::version,
+  String $scala_version                      = $kafka::params::scala_version,
+  Stdlib::Absolutepath $install_dir          = $kafka::params::install_dir,
+  Stdlib::HTTPUrl $mirror_url                = $kafka::params::mirror_url,
+  Boolean $install_java                      = $kafka::params::install_java,
+  Stdlib::Absolutepath $package_dir          = $kafka::params::package_dir,
+  Optional[String] $package_name             = $kafka::params::package_name,
+  String $package_ensure                     = $kafka::params::package_ensure,
+  String $user                               = $kafka::params::user,
+  String $group                              = $kafka::params::group,
+  Optional[Integer] $user_id                 = $kafka::params::user_id,
+  Optional[Integer] $group_id                = $kafka::params::group_id,
+  Boolean $manage_user                       = $kafka::params::manage_user,
+  Boolean $manage_group                      = $kafka::params::manage_group,
+  Stdlib::Filemode $config_mode              = $kafka::params::config_mode,
+  Stdlib::Absolutepath $config_dir           = $kafka::params::config_dir,
+  Stdlib::Absolutepath $log_dir              = $kafka::params::log_dir,
+  Stdlib::Absolutepath $bin_dir              = $kafka::params::bin_dir,
+  String $service_name                       = 'kafka-mirror',
+  Boolean $service_install                   = $kafka::params::service_install,
+  Enum['running', 'stopped'] $service_ensure = $kafka::params::service_ensure,
+  Boolean $service_restart                   = $kafka::params::service_restart,
+  Array[String] $service_requires            = $kafka::params::service_requires,
+  Optional[String] $limit_nofile             = $kafka::params::limit_nofile,
+  Optional[String] $limit_core               = $kafka::params::limit_core,
+  Hash $env                                  = {},
+  Hash $consumer_config                      = {},
+  Hash $producer_config                      = {},
+  Hash $service_config                       = {},
+  String $heap_opts                          = $kafka::params::mirror_heap_opts,
+  String $jmx_opts                           = $kafka::params::mirror_jmx_opts,
+  String $log4j_opts                         = $kafka::params::mirror_log4j_opts,
 ) inherits kafka::params {
 
-  validate_re($::osfamily, 'RedHat|Debian\b', "${::operatingsystem} not supported")
-  validate_re($mirror_url, '^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$', "${mirror_url} is not a valid url")
-  validate_integer($num_streams)
-  validate_integer($num_producers)
-  validate_bool($install_java)
-  validate_re($max_heap, '\d+[g|G|m|M|k|K]', "${max_heap} is not a valid heap size")
-  validate_absolute_path($package_dir)
-  validate_bool($service_restart)
-
-  class { '::kafka::mirror::install': } ->
-  class { '::kafka::mirror::config': } ->
-  class { '::kafka::mirror::service': } ->
-  Class['kafka::mirror']
+  class { '::kafka::mirror::install': }
+  -> class { '::kafka::mirror::config': }
+  -> class { '::kafka::mirror::service': }
+  -> Class['kafka::mirror']
 }

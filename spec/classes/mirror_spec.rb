@@ -1,9 +1,11 @@
 require 'spec_helper'
+require 'shared_examples_param_validation'
 
 describe 'kafka::mirror', type: :class do
   let :facts do
     {
       osfamily: 'Debian',
+      os: { family: 'Debian' },
       operatingsystem: 'Ubuntu',
       operatingsystemrelease: '14.04',
       lsbdistcodename: 'trusty',
@@ -12,7 +14,7 @@ describe 'kafka::mirror', type: :class do
     }
   end
 
-  let :params do
+  let :common_params do
     {
       consumer_config: {
         'group.id'          => 'kafka-mirror',
@@ -22,6 +24,10 @@ describe 'kafka::mirror', type: :class do
         'bootstrap.servers' => 'localhost:9092'
       }
     }
+  end
+
+  let :params do
+    common_params
   end
 
   it { is_expected.to contain_class('kafka::mirror::install').that_comes_before('Class[kafka::mirror::config]') }
@@ -38,14 +44,15 @@ describe 'kafka::mirror', type: :class do
 
     describe 'kafka::mirror::config' do
       context 'defaults' do
+        it { is_expected.to contain_class('kafka::consumer::config') }
         it { is_expected.to contain_class('kafka::producer::config') }
       end
     end
 
     describe 'kafka::mirror::service' do
       context 'defaults' do
-        it { is_expected.to contain_file('kafka-mirror.service') }
-
+        it { is_expected.to contain_file('/etc/init.d/kafka-mirror') }
+        it { is_expected.to contain_file('/etc/init.d/kafka-mirror').with_content %r{/opt/kafka/config/(?=.*consumer)|(?=.*producer).properties} }
         it { is_expected.to contain_service('kafka-mirror') }
       end
     end
@@ -55,6 +62,7 @@ describe 'kafka::mirror', type: :class do
     let :facts do
       {
         osfamily: 'RedHat',
+        os: { family: 'RedHat' },
         operatingsystem: 'CentOS',
         operatingsystemrelease: '7',
         operatingsystemmajrelease: '7',
@@ -72,13 +80,15 @@ describe 'kafka::mirror', type: :class do
 
     describe 'kafka::mirror::config' do
       context 'defaults' do
+        it { is_expected.to contain_class('kafka::consumer::config') }
         it { is_expected.to contain_class('kafka::producer::config') }
       end
     end
 
     describe 'kafka::mirror::service' do
       context 'defaults' do
-        it { is_expected.to contain_file('kafka-mirror.service').that_notifies('Exec[systemctl-daemon-reload]') }
+        it { is_expected.to contain_file('/etc/systemd/system/kafka-mirror.service').that_notifies('Exec[systemctl-daemon-reload]') }
+        it { is_expected.to contain_file('/etc/systemd/system/kafka-mirror.service').with_content %r{/opt/kafka/config/(?=.*consumer)|(?=.*producer).properties} }
 
         it do
           is_expected.to contain_file('/etc/init.d/kafka-mirror').with(
@@ -92,4 +102,6 @@ describe 'kafka::mirror', type: :class do
       end
     end
   end
+
+  it_validates_parameter 'mirror_url'
 end

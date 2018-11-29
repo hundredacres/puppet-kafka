@@ -8,41 +8,33 @@
 # It manages the broker config files
 #
 class kafka::broker::config(
-  $config          = $kafka::broker::config,
-  $config_defaults = $kafka::broker::config_defaults,
-  $install_dir     = $kafka::broker::install_dir,
-  $service_restart = $kafka::broker::service_restart,
-  $service_install = $kafka::broker::service_install
+  Stdlib::Absolutepath $config_dir = $kafka::broker::config_dir,
+  String $service_name             = $kafka::broker::service_name,
+  Boolean $service_install         = $kafka::broker::service_install,
+  Boolean $service_restart         = $kafka::broker::service_restart,
+  Hash $config                     = $kafka::broker::config,
+  Stdlib::Filemode $config_mode    = $kafka::broker::config_mode,
+  String $group                    = $kafka::broker::group,
 ) {
 
-  if $caller_module_name != $module_name {
+  if ($caller_module_name != $module_name) {
     fail("Use of private class ${name} by ${caller_module_name}")
   }
 
-  if versioncmp($kafka::version, '0.9.0.0') < 0 {
-    if $config['broker.id'] == '-1' {
-      fail('[Broker] You need to specify a value for broker.id')
-    }
-  }
-
-  $server_config = deep_merge($config_defaults, $config)
-
-  if $service_install {
-    $config_notify = $service_restart ? {
-      true  => Service['kafka'],
-      false => undef
-    }
+  if ($service_install and $service_restart) {
+    $config_notify = Service[$service_name]
   } else {
     $config_notify = undef
   }
 
-  file { '/opt/kafka/config/server.properties':
+  $doctag = 'brokerconfigs'
+  file { "${config_dir}/server.properties":
     ensure  => present,
-    owner   => 'kafka',
-    group   => 'kafka',
-    mode    => '0644',
-    content => template('kafka/server.properties.erb'),
+    owner   => 'root',
+    group   => $group,
+    mode    => $config_mode,
+    content => template('kafka/properties.erb'),
     notify  => $config_notify,
-    require => File['/opt/kafka/config'],
+    require => File[$config_dir],
   }
 }
