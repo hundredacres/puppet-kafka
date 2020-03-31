@@ -103,6 +103,7 @@ describe 'kafka::broker', type: :class do
         it { is_expected.to contain_file('/etc/systemd/system/kafka.service').with_content %r{^After=network\.target syslog\.target$} }
         it { is_expected.to contain_file('/etc/systemd/system/kafka.service').with_content %r{^Wants=network\.target syslog\.target$} }
         it { is_expected.not_to contain_file('/etc/systemd/system/kafka.service').with_content %r{^LimitNOFILE=} }
+        it { is_expected.not_to contain_file('/etc/systemd/system/kafka.service').with_content %r{^LimitNPROC=} }
         it { is_expected.not_to contain_file('/etc/systemd/system/kafka.service').with_content %r{^LimitCORE=} }
 
         it do
@@ -124,6 +125,16 @@ describe 'kafka::broker', type: :class do
         end
 
         it { is_expected.to contain_file('/etc/systemd/system/kafka.service').with_content %r{^LimitNOFILE=65536$} }
+      end
+
+      context 'limit_nproc set' do
+        let :params do
+          {
+            limit_nproc: '65536'
+          }
+        end
+
+        it { is_expected.to contain_file('/etc/systemd/system/kafka.service').with_content %r{^LimitNPROC=65536$} }
       end
 
       context 'limit_core set' do

@@ -18,6 +18,7 @@ class kafka::consumer::service(
   Enum['running', 'stopped'] $service_ensure = $kafka::consumer::service_ensure,
   Array[String] $service_requires            = $kafka::consumer::service_requires,
   Optional[String] $limit_nofile             = $kafka::consumer::limit_nofile,
+  Optional[String] $limit_nproc              = $kafka::consumer::limit_nproc,
   Optional[String] $limit_core               = $kafka::consumer::limit_core,
   Hash $env                                  = $kafka::consumer::env,
   String $jmx_opts                           = $kafka::consumer::jmx_opts,

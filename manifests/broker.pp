@@ -85,6 +85,9 @@
 # [*limit_nofile*]
 # Set the 'LimitNOFILE' option of the systemd service.
 #
+# [*limit_nproc*]
+# Set the 'LimitNPROC' option of the systemd service.
+#
 # [*limit_core*]
 # Set the 'LimitCORE' option of the systemd service.
 #
@@ -136,6 +139,7 @@ class kafka::broker (
   Boolean $service_restart                   = $kafka::params::service_restart,
   Array[String] $service_requires            = $kafka::params::service_requires,
   Optional[String] $limit_nofile             = $kafka::params::limit_nofile,
+  Optional[String] $limit_nproc              = $kafka::params::limit_nproc,
   Optional[String] $limit_core               = $kafka::params::limit_core,
   Optional[String] $timeout_stop             = $kafka::params::timeout_stop,
   Boolean $exec_stop                         = $kafka::params::exec_stop,

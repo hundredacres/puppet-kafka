@@ -18,6 +18,7 @@ class kafka::broker::service(
   Enum['running', 'stopped'] $service_ensure = $kafka::broker::service_ensure,
   Array[String] $service_requires            = $kafka::broker::service_requires,
   Optional[String] $limit_nofile             = $kafka::broker::limit_nofile,
+  Optional[String] $limit_nproc              = $kafka::broker::limit_nproc,
   Optional[String] $limit_core               = $kafka::broker::limit_core,
   Optional[String] $timeout_stop             = $kafka::broker::timeout_stop,
   Boolean $exec_stop                         = $kafka::broker::exec_stop,
