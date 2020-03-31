@@ -18,6 +18,7 @@ class kafka::mirror::service(
   Enum['running', 'stopped'] $service_ensure = $kafka::mirror::service_ensure,
   Array[String] $service_requires            = $kafka::mirror::service_requires,
   Optional[String] $limit_nofile             = $kafka::mirror::limit_nofile,
+  Optional[String] $limit_nproc              = $kafka::mirror::limit_nproc,
   Optional[String] $limit_core               = $kafka::mirror::limit_core,
   Hash $env                                  = $kafka::mirror::env,
   Hash $consumer_config                      = $kafka::mirror::consumer_config,

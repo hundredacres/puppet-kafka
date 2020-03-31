@@ -37,6 +37,9 @@ ExecStart=<%= @bin_dir %>/kafka-console-producer.sh <% @service_config.sort.each
 <%- if @limit_nofile -%>
 LimitNOFILE=<%= @limit_nofile %>
 <%- end -%>
+<%- if @limit_nproc -%>
+LimitNPROC=<%= @limit_nproc %>
+<%- end -%>
 <%- if @limit_core -%>
 LimitCORE=<%= @limit_core %>
 <%- end -%>
