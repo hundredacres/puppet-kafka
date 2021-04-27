@@ -58,7 +58,6 @@ class kafka::broker::service(
       }
 
       File["/etc/systemd/system/${service_name}.service"]
-      ~> Exec['systemctl-daemon-reload']
       -> Service[$service_name]
 
     } else {
